@@ -43,7 +43,7 @@ WalkEngineParameters::WalkEngineParameters(const string& prefix):
     // other
 //  phase_length_(0.38),
     phase_length_(getParam(namedParams, prefix + "utwalk_phase_length")),
-    k_(sqrtf(9806.65f / walk_height_)), // sqrt(g/h) // fixed parameter
+    k_(sqrt(9806.65f / walk_height_)), // sqrt(g/h) // fixed parameter
     //swing_ankle_offset_(DEG_T_RAD * -5), // if open for opt., start from 0
     swing_ankle_offset_(getParam(namedParams, prefix + "utwalk_swing_ankle_offset")),
     com_measurement_delay_(0.02),

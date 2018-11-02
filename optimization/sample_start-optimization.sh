@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Choose which optimization task to run
-task="kick" # "walk"
+task="walk" # "kick"
 
 # This script runs the simspark soccer simulator and an agent 
 
@@ -17,7 +17,7 @@ echo -n "and I am on: "
 hostname
 echo "Agent port: $SPARK_AGENTPORT, Monitor port: $SPARK_SERVERPORT"
 
-rcssserver3d --agent-port $SPARK_AGENTPORT --server-port $SPARK_SERVERPORT &
+rcsoccersim3d --agent-port $SPARK_AGENTPORT --server-port $SPARK_SERVERPORT &
 PID=$!
 
 #To view task while it runs uncomment the following line
@@ -40,13 +40,13 @@ export LD_LIBRARY_PATH=./libs:$LD_LIBRARY_PATH
 if [ $task == "kick" ]
 then
     # FixedKick optimization task 
-    $DIR_SCRIPT/../agentspark --unum 2 --type $TYPE --paramsfile $DIR_SCRIPT/../paramfiles/defaultParams.txt --paramsfile $DIR_SCRIPT/../paramfiles/defaultParams_t$TYPE.txt --paramsfile $PARAMS_FILE --experimentout $OUTPUT_FILE --optimize fixedKickAgent --port $SPARK_AGENTPORT --mport $SPARK_SERVERPORT & 
+    $DIR_SCRIPT/../Roxy --unum 2 --type $TYPE --paramsfile $DIR_SCRIPT/../paramfiles/defaultParams.txt --paramsfile $DIR_SCRIPT/../paramfiles/defaultParams_t$TYPE.txt --paramsfile $PARAMS_FILE --experimentout $OUTPUT_FILE --optimize fixedKickAgent --port $SPARK_AGENTPORT --mport $SPARK_SERVERPORT & 
 fi
 
 if [ $task == "walk" ]
 then
 # WalkForward optimization task
-$DIR_SCRIPT/../agentspark --unum 2 --type $TYPE --paramsfile $DIR_SCRIPT/../paramfiles/defaultParams.txt --paramsfile $DIR_SCRIPT/../paramfiles/defaultParams_t$TYPE.txt --paramsfile $PARAMS_FILE --experimentout $OUTPUT_FILE --optimize walkForwardAgent --port $SPARK_AGENTPORT --mport $SPARK_SERVERPORT &
+$DIR_SCRIPT/../Roxy --unum 2 --type $TYPE --paramsfile $DIR_SCRIPT/../paramfiles/defaultParams.txt --paramsfile $DIR_SCRIPT/../paramfiles/defaultParams_t$TYPE.txt --paramsfile $PARAMS_FILE --experimentout $OUTPUT_FILE --optimize walkForwardAgent --port $SPARK_AGENTPORT --mport $SPARK_SERVERPORT &
 fi
 
 AGENTPID=$!

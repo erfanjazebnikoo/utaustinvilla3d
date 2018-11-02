@@ -4,12 +4,12 @@
 #
 
 
-AGENT_BINARY=agentspark
+AGENT_BINARY=Roxy
 BINARY_DIR="."
 LIBS_DIR="./libs"
 NUM_PLAYERS=11
 
-team="UTAustinVilla_Base"
+team="Roxy"
 host="localhost"
 port=3100
 paramsfile=paramfiles/defaultParams.txt

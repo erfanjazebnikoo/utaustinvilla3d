@@ -11,16 +11,15 @@
 
 MotionCore *MotionCore::inst_ = NULL;
 
-MotionCore::MotionCore (CoreType type, bool use_shared_memory, Memory& memory):
+MotionCore::MotionCore(CoreType type, bool use_shared_memory, Memory& memory) :
 // DANIEL CHANGED THIS
 //  memory_(use_shared_memory,false),
 // TO
-    memory_(memory),
-    type_(type),
-    last_frame_processed_(0),
-    log_("/dev/null"),
-    fps_frames_processed_(0)
-{
+memory_(memory),
+type_(type),
+last_frame_processed_(0),
+log_("/dev/null"),
+fps_frames_processed_(0) {
     inst_ = this;
     initMemory();
     initModules();
@@ -58,7 +57,7 @@ void MotionCore::move(WalkRequestBlock::ParamSet paramSet, float xvel, float yve
         walk_request_->motion_ = WalkRequestBlock::WALK;
         walk_request_->paramSet_ = paramSet;
         walk_request_->speed_.rotation = rotvel;
-        walk_request_->speed_.translation = Vector2<float>(xvel,yvel);
+        walk_request_->speed_.translation = Vector2<float>(xvel, yvel);
         walk_request_->pedantic_walk_ = false;
         walk_request_->percentage_speed_ = true;
     }
@@ -101,7 +100,7 @@ void MotionCore::processMotionFrame() {
       } else {
         walk_request_->motion_ = WalkRequestBlock::STAND;
       }
-    */
+     */
 
     // actually do stuff
     processSensorUpdate();
@@ -143,8 +142,8 @@ void MotionCore::initMemory() {
     memory_.addBlockByName("walk_request");
     memory_.addBlockByName("odometry");
 
-    memory_.getBlockByName(frame_info_,"frame_info");
-    memory_.getBlockByName(walk_request_,"walk_request");
+    memory_.getBlockByName(frame_info_, "frame_info");
+    memory_.getBlockByName(walk_request_, "walk_request");
 
     // print out all the memory blocks we're using
     /*
@@ -154,7 +153,7 @@ void MotionCore::initMemory() {
     for (unsigned int i = 0; i < memory_block_names.size(); i++)
       std::cout << memory_block_names[i] << std::endl;
     std::cout << "--------------" << std::endl;
-    */
+     */
 }
 
 void MotionCore::logMemory() {

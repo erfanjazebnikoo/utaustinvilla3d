@@ -16,20 +16,18 @@
 
 extern int agentBodyType;
 
-
 /*
  * namedParams_ are a mapping between parameters and their values
  */
 NaoBehavior::
 NaoBehavior(const std::string teamName, int uNum, const map<string, string>& namedParams_, const string& rsg_) :
-    namedParams( namedParams_ ),
-    rsg( rsg_ )
-{
+namedParams(namedParams_),
+rsg(rsg_) {
 
     //cout << "Constructing of Nao Behavior" << endl;
 
-    srand ((unsigned)time(NULL) );
-    srand48((unsigned)time(NULL));
+    srand((unsigned) time(NULL));
+    srand48((unsigned) time(NULL));
 
     classname = "NaoBehavior"; //TODO: eliminate it...
 
@@ -45,29 +43,29 @@ NaoBehavior(const std::string teamName, int uNum, const map<string, string>& nam
     worldModel = new WorldModel();
     bodyModel = new BodyModel(worldModel);
 
-    memory_ = new Memory(false,true);
+    memory_ = new Memory(false, true);
 
-    memory_->getOrAddBlockByName(frame_info_,"frame_info");
-    memory_->getOrAddBlockByName(vision_frame_info_,"vision_frame_info");
+    memory_->getOrAddBlockByName(frame_info_, "frame_info");
+    memory_->getOrAddBlockByName(vision_frame_info_, "vision_frame_info");
     frame_info_->source = MEMORY_SIM; // set to simulaor
     vision_frame_info_->source = MEMORY_SIM;
 
-    memory_->getOrAddBlockByName(raw_sensors_,"raw_sensors");
-    memory_->getOrAddBlockByName(raw_joint_angles_,"raw_joint_angles");
-    memory_->getOrAddBlockByName(processed_joint_angles_,"processed_joint_angles");
-    memory_->getOrAddBlockByName(raw_joint_commands_,"raw_joint_commands");
-    memory_->getOrAddBlockByName(processed_joint_commands_,"processed_joint_commands");
-    memory_->getOrAddBlockByName(sim_effectors_,"sim_effectors");
+    memory_->getOrAddBlockByName(raw_sensors_, "raw_sensors");
+    memory_->getOrAddBlockByName(raw_joint_angles_, "raw_joint_angles");
+    memory_->getOrAddBlockByName(processed_joint_angles_, "processed_joint_angles");
+    memory_->getOrAddBlockByName(raw_joint_commands_, "raw_joint_commands");
+    memory_->getOrAddBlockByName(processed_joint_commands_, "processed_joint_commands");
+    memory_->getOrAddBlockByName(sim_effectors_, "sim_effectors");
 
     core = new MotionCore(CORE_SIM, true, *memory_);
     fParsedVision = false;
-    particleFilter = new PFLocalization( worldModel, bodyModel, core);
+    particleFilter = new PFLocalization(worldModel, bodyModel, core);
 
     parser = new Parser(worldModel, bodyModel, teamName, particleFilter,
-                        vision_frame_info_,
-                        frame_info_,
-                        raw_joint_angles_,
-                        raw_sensors_ );
+            vision_frame_info_,
+            frame_info_,
+            raw_joint_angles_,
+            raw_sensors_);
 
 
 
@@ -90,20 +88,17 @@ NaoBehavior(const std::string teamName, int uNum, const map<string, string>& nam
 
     // TODO: Treat paths more correctly? (system independent way)
     try {
-        readSkillsFromFile( "./skills/stand.skl" );
-        readSkillsFromFile( "./skills/kick.skl" );
+        readSkillsFromFile("./skills/stand.skl");
+        readSkillsFromFile("./skills/kick.skl");
 
         // ik skills
-        readSkillsFromFile( "./skills/kick_ik_0.skl" );
+        readSkillsFromFile("./skills/kick_ik_0.skl");
         // end ik skills
 
-    }
-    catch( std::string& what ) {
+    }    catch (std::string& what) {
         cerr << "Exception caught: " << what << endl;
         exit(1);
-    }
-    catch (std::exception& e)
-    {
+    }    catch (std::exception& e) {
         cerr << e.what() << endl;
         exit(1);
     }
@@ -131,26 +126,22 @@ string NaoBehavior::Init() {
     return "(scene " + rsg + ")";
 }
 
-
-
-
-
 string NaoBehavior::Think(const std::string& message) {
 
     //  cout << "(NaoBehavior) received message " << message << endl;
 
     fParsedVision = false;
     bool parseSuccess = parser->parse(message, fParsedVision);
-    if(!parseSuccess && (worldModel->getPlayMode() != PM_BEFORE_KICK_OFF)) {
-//    cout << "****************************************\n";
-//    cout << "Could not parse message: " << message << "\n";
-//    cout << "****************************************\n";
+    if (!parseSuccess && (worldModel->getPlayMode() != PM_BEFORE_KICK_OFF)) {
+        //    cout << "****************************************\n";
+        //    cout << "Could not parse message: " << message << "\n";
+        //    cout << "****************************************\n";
     }
 
     //  cout << "\nparseSuccess: " << parseSuccess << "\n";
     //  worldModel->display();
     bodyModel->refresh();
-    if(fParsedVision) {
+    if (fParsedVision) {
         if (!worldModel->isFallen()) {
             parser->processVision();
         } else {
@@ -170,7 +161,7 @@ string NaoBehavior::Think(const std::string& message) {
     dir = dir.rotateAboutZ(-worldModel->getMyAngDeg());
     worldModel->getRVSender()->drawPoint(pos.getX(), pos.getY(), 10);
     worldModel->getRVSender()->drawLine(pos.getX(), pos.getY(), pos.getX()+dir.getX(), pos.getY()+dir.getY());
-    */
+     */
 
     calculateAngles();
 
@@ -179,11 +170,11 @@ string NaoBehavior::Think(const std::string& message) {
         frame_info_->start_time = frame_info_->seconds_since_start;
         vision_frame_info_->start_time = frame_info_->start_time;
     }
-    frame_info_->seconds_since_start= frame_info_->seconds_since_start - frame_info_->start_time;
+    frame_info_->seconds_since_start = frame_info_->seconds_since_start - frame_info_->start_time;
 
     raw_joint_angles_->values_[RHipYawPitch] = raw_joint_angles_->values_[LHipYawPitch];
 
-    preProcessJoints();  // Apply the correct sign to the joint angles
+    preProcessJoints(); // Apply the correct sign to the joint angles
 
     postProcessJoints(); // Flip the joint angles back
 
@@ -200,8 +191,8 @@ string NaoBehavior::Think(const std::string& message) {
 
     if (worldModel->getLastPlayMode() != worldModel->getPlayMode() &&
             (worldModel->getPlayMode() == PM_BEFORE_KICK_OFF ||
-             worldModel->getPlayMode() == PM_GOAL_LEFT ||
-             worldModel->getPlayMode() == PM_GOAL_RIGHT)) {
+            worldModel->getPlayMode() == PM_GOAL_LEFT ||
+            worldModel->getPlayMode() == PM_GOAL_RIGHT)) {
         initBeamed = false;
     }
 
@@ -215,8 +206,7 @@ string NaoBehavior::Think(const std::string& message) {
     if ((worldModel->getPlayMode() == PM_GOAL_LEFT || worldModel->getPlayMode() == PM_GOAL_RIGHT || worldModel->getPlayMode() == PM_BEFORE_KICK_OFF) && worldModel->getLastPlayMode() != worldModel->getPlayMode()) {
         beamTime = worldModel->getTime() + hoverTime;
     }
-
-    else if(beamTime >= 0 && worldModel->getTime() >= beamTime) {
+    else if (beamTime >= 0 && worldModel->getTime() >= beamTime) {
         //initialized = false;
         initBeamed = false;
         beamTime = -1.0;
@@ -228,14 +218,14 @@ string NaoBehavior::Think(const std::string& message) {
     }
     worldModel->setLastPlayMode(worldModel->getPlayMode());
 
-    if(!initialized) {
-        if(!worldModel->getUNumSet() || !worldModel->getSideSet()) {
+    if (!initialized) {
+        if (!worldModel->getUNumSet() || !worldModel->getSideSet()) {
             //      cout << "UNum and side not received yet.\n";
             action = "";
             return action;
         }
 
-        if(!initBeamed) {
+        if (!initBeamed) {
             initBeamed = true;
 
 
@@ -245,14 +235,13 @@ string NaoBehavior::Think(const std::string& message) {
             // It could either be implemented here (real game)
             // or in the inherited classes
             // Parameters are being filled in the beam function.
-            this->beam( beamX, beamY, beamAngle );
+            this->beam(beamX, beamY, beamAngle);
             stringstream ss;
             ss << "(beam " << beamX << " " << beamY << " " << beamAngle << ")";
             particleFilter->setForBeam(beamX, beamY, beamAngle);
             action = ss.str();
             return action;
-        }
-        else {
+        } else {
             // Not Initialized
             bodyModel->setInitialHead();
             bodyModel->setInitialArm(ARM_LEFT);
@@ -263,7 +252,7 @@ string NaoBehavior::Think(const std::string& message) {
         }
     }
 
-    if(!initBeamed) {
+    if (!initBeamed) {
         initBeamed = true;
 
         double beamX, beamY, beamAngle;
@@ -272,7 +261,7 @@ string NaoBehavior::Think(const std::string& message) {
         // It could either be implemented here (real game)
         // or in the inherited classes - for optimization agent.
         // Parameters are being filled in the beam function.
-        this->beam( beamX, beamY, beamAngle );
+        this->beam(beamX, beamY, beamAngle);
         stringstream ss;
         ss << "(beam " << beamX << " " << beamY << " " << beamAngle << ")";
         particleFilter->setForBeam(beamX, beamY, beamAngle);
@@ -294,13 +283,13 @@ void NaoBehavior::act() {
     refresh();
 
     const double LAST_LINE_SIGHTING_THRESH = 0.1;
-    if (worldModel->getTime()-worldModel->getLastLineSightingTime() > LAST_LINE_SIGHTING_THRESH) {
+    if (worldModel->getTime() - worldModel->getLastLineSightingTime() > LAST_LINE_SIGHTING_THRESH) {
         worldModel->setLocalized(false);
     }
 
 
     // If the ball gets too far away, reset kick state
-    if(me.getDistanceTo(ball) > 1) {
+    if (me.getDistanceTo(ball) > 1) {
         resetKickState();
     }
 
@@ -310,22 +299,20 @@ void NaoBehavior::act() {
 
 
 
-    if(checkingFall()) {
+    if (checkingFall()) {
         resetSkills();
         bodyModel->setUseOmniWalk(false);
         return;
-    }
-    else if(resetForKickoff) {
+    } else if (resetForKickoff) {
         if (beamablePlayMode() && (worldModel->isFallen() || worldModel->getTime() <= beamTime)) {
             initBeamed = false;
         }
         resetSkills();
         skill = SKILL_STAND;
-        core->move(0,0,0);
+        core->move(0, 0, 0);
         velocity.paramSet = WalkRequestBlock::PARAMS_DEFAULT;
-    }
-    else {
-        if(skills[skill]->done( bodyModel, worldModel) ||
+    } else {
+        if (skills[skill]->done(bodyModel, worldModel) ||
                 bodyModel->useOmniWalk()) {
             skills[skill]->reset();
             resetScales();
@@ -337,15 +324,15 @@ void NaoBehavior::act() {
             }
 
             bodyModel->setUseOmniWalk(true);
-            switch(currentSkill) {
-            case SKILL_WALK_OMNI:
-                core->move(velocity.paramSet, velocity.x, velocity.y, velocity.rot);
-                break;
-            case SKILL_STAND:
-                core->move(0,0,0);
-                break;
-            default:
-                bodyModel->setUseOmniWalk(false);
+            switch (currentSkill) {
+                case SKILL_WALK_OMNI:
+                    core->move(velocity.paramSet, velocity.x, velocity.y, velocity.rot);
+                    break;
+                case SKILL_STAND:
+                    core->move(0, 0, 0);
+                    break;
+                default:
+                    bodyModel->setUseOmniWalk(false);
             }
 
             if (bodyModel->useOmniWalk()) {
@@ -367,7 +354,7 @@ void NaoBehavior::act() {
     //  cout << "Executing: " << EnumParser<SkillType>::getStringFromEnum(skill) << endl;
     //  cerr << "Selected skill: " << SkillType2Str[skill] << " time: " << worldModel->getTime() << endl;
     //    LOG_ST(skill);
-    skills[skill]->execute( bodyModel, worldModel );
+    skills[skill]->execute(bodyModel, worldModel);
 
 
 
@@ -376,7 +363,7 @@ void NaoBehavior::act() {
     if (bodyModel->useOmniWalk()) {
         worldModel->addExecutedSkill(SKILL_WALK_OMNI);
     } else {
-        worldModel->addExecutedSkill( skill );
+        worldModel->addExecutedSkill(skill);
     }
 
 
@@ -389,7 +376,7 @@ void NaoBehavior::act() {
     ball.setZ(0);
     // Currently, every 2 seconds
     static double panOffset = drand48() * 4.0;
-    int panState = ( static_cast<int>( worldModel->getTime()+panOffset ) ) % 4;
+    int panState = (static_cast<int> (worldModel->getTime() + panOffset)) % 4;
     double ballDistance, ballAngle;
 
     getTargetDistanceAndAngle(ball, ballDistance, ballAngle);
@@ -400,33 +387,32 @@ void NaoBehavior::act() {
         bodyModel->setTargetAngle(EFF_H1, 0);
     } else if (ballDistance < 1.0 && worldModel->getWorldObject(WO_BALL)->validPosition) {
         // close to the ball, focusing on the ball and turning head 30 degrees
-        if( panState == 0 || panState == 2 ) {
+        if (panState == 0 || panState == 2) {
             bodyModel->setScale(EFF_H1, 0.3);
             bodyModel->setTargetAngle(EFF_H1, ballAngle);
         } else {
             int direction = (panState == 1) ? 1 : -1;
             bodyModel->setScale(EFF_H1, 0.3);
-            bodyModel->setTargetAngle(EFF_H1, ballAngle+(direction*30.0));
+            bodyModel->setTargetAngle(EFF_H1, ballAngle + (direction * 30.0));
         }
     } else {
         // default behavior
-        if( panState == 0 || panState == 2 ) {
+        if (panState == 0 || panState == 2) {
             bodyModel->setScale(EFF_H1, 0.3);
             bodyModel->setTargetAngle(EFF_H1, 0);
         } else {
             int direction = (panState == 1) ? 1 : -1;
             bodyModel->setScale(EFF_H1, 0.3);
-            bodyModel->setTargetAngle(EFF_H1, direction*120);// 30.0); // 120.0);
+            bodyModel->setTargetAngle(EFF_H1, direction * 120); // 30.0); // 120.0);
         }
     }
 }
 
-
 /*
  * Throws string
  */
-void NaoBehavior::readSkillsFromFile( const std::string& filename) {
-//  cerr << "Loading skills from file " << filename << endl;
+void NaoBehavior::readSkillsFromFile(const std::string& filename) {
+    //  cerr << "Loading skills from file " << filename << endl;
 
 
     // Load a skill file to memory. Assuming a file is < 4K
@@ -435,9 +421,9 @@ void NaoBehavior::readSkillsFromFile( const std::string& filename) {
     char buff[buffsize];
     int numRead;
 
-    fstream skillFile( filename.c_str(), ios_base::in );
-    skillFile.read( buff, buffsize );
-    if( !skillFile.eof() ) {
+    fstream skillFile(filename.c_str(), ios_base::in);
+    skillFile.read(buff, buffsize);
+    if (!skillFile.eof()) {
         throw "failed to read the whole skill file " + filename;
     }
     numRead = skillFile.gcount();
@@ -450,26 +436,26 @@ void NaoBehavior::readSkillsFromFile( const std::string& filename) {
     // Preprocessing: replace parameters by values.
 
     string skillDescription("");
-    skillDescription.reserve( buffsize );
-    for( int i = 0; i < numRead; ++i ) {
+    skillDescription.reserve(buffsize);
+    for (int i = 0; i < numRead; ++i) {
         char c = buff[i];
-        if( c == '$' ) {
+        if (c == '$') {
             // parameter - replace it
 
             string param("");
             i += 1;
-            while( i < numRead && ( isalnum( buff[i] ) || buff[i] == '_' ) ) {
+            while (i < numRead && (isalnum(buff[i]) || buff[i] == '_')) {
                 param += buff[i];
                 ++i;
             }
 
-            map<string, string>::const_iterator it = namedParams.find( param );
-            if( it == namedParams.end() ) {
+            map<string, string>::const_iterator it = namedParams.find(param);
+            if (it == namedParams.end()) {
                 throw "Missing parameter in skill file " + filename + ": " + param;
             }
             skillDescription += it->second;
 
-            if( i < numRead )
+            if (i < numRead)
                 skillDescription += buff[i];
 
         } else {
@@ -484,50 +470,44 @@ void NaoBehavior::readSkillsFromFile( const std::string& filename) {
 
     // Parse
 
-    SkillParser parser( skills, bodyModel );
-    parse_info<iterator_t> info = parse( skillDescription.c_str(),
-                                         parser,
-                                         ( space_p | comment_p("#") )
-                                       );
+    SkillParser parser(skills, bodyModel);
+    parse_info<iterator_t> info = parse(skillDescription.c_str(),
+            parser,
+            (space_p | comment_p("#"))
+            );
 
 
 
     // check results
-    if (info.hit)
-    {
-//    cout << "-------------------------\n";
-//    cout << "Parsing succeeded\n";
-//    cout << "-------------------------\n";
-//    cout << "stop "  << info.stop << endl;
-//    cout << "full " << info.full << endl;
-//    cout << "length " << info.length << endl;
-    }
-    else
-    {
+    if (info.hit) {
+        //    cout << "-------------------------\n";
+        //    cout << "Parsing succeeded\n";
+        //    cout << "-------------------------\n";
+        //    cout << "stop "  << info.stop << endl;
+        //    cout << "full " << info.full << endl;
+        //    cout << "length " << info.length << endl;
+    } else {
         cout << "-------------------------\n";
         cout << "Parsing failed\n";
         //            cout << "stopped at: \": " << info.stop << "\"\n";
         cout << "-------------------------\n";
-//    throw "Parsing failed";
+        //    throw "Parsing failed";
     }
 
 }
 
-
-bool NaoBehavior::isRightSkill( SkillType skill ) {
-    string skillStr = EnumParser<SkillType>::getStringFromEnum( skill );
+bool NaoBehavior::isRightSkill(SkillType skill) {
+    string skillStr = EnumParser<SkillType>::getStringFromEnum(skill);
     return skillStr.find("RIGHT") != string::npos;
 }
 
-bool NaoBehavior::isLeftSkill( SkillType skill ) {
-    string skillStr = EnumParser<SkillType>::getStringFromEnum( skill );
+bool NaoBehavior::isLeftSkill(SkillType skill) {
+    string skillStr = EnumParser<SkillType>::getStringFromEnum(skill);
     return skillStr.find("LEFT") != string::npos;
 }
 
-
 double NaoBehavior::
-trim(const double& value, const double& min, const double&max)
-{
+trim(const double& value, const double& min, const double&max) {
     double ret;
     if (value > max)
         ret = max;
@@ -541,19 +521,19 @@ trim(const double& value, const double& min, const double&max)
 
 void NaoBehavior::calculateAngles() {
 
-    float  accX = raw_sensors_->values_[accelX];
-    float  accY = raw_sensors_->values_[accelY];
-    float  accZ = raw_sensors_->values_[accelZ];
+    float accX = raw_sensors_->values_[accelX];
+    float accY = raw_sensors_->values_[accelY];
+    float accZ = raw_sensors_->values_[accelZ];
 
-    raw_sensors_->values_[angleX] = atan2(accY,accZ);
-    raw_sensors_->values_[angleY] = -atan2(accX,accZ);
+    raw_sensors_->values_[angleX] = atan2(accY, accZ);
+    raw_sensors_->values_[angleY] = -atan2(accX, accZ);
 
     //raw_sensors_->values_[gyroX] = 0; // = 1000000.0;
     //raw_sensors_->values_[gyroY] = 0; //= 1000000.0;
 }
 
 void NaoBehavior::preProcessJoints() {
-    for (int i=0; i<NUM_JOINTS; i++) {
+    for (int i = 0; i < NUM_JOINTS; i++) {
         processed_joint_angles_->values_[i] = spark_joint_signs[i] * raw_joint_angles_->values_[i];
     }
 }
@@ -561,7 +541,7 @@ void NaoBehavior::preProcessJoints() {
 void NaoBehavior::postProcessJoints() {
     raw_joint_commands_->angle_time_ = processed_joint_commands_->angle_time_;
     raw_joint_commands_->stiffness_time_ = processed_joint_commands_->stiffness_time_;
-    for (int i=0; i<NUM_JOINTS; i++) {
+    for (int i = 0; i < NUM_JOINTS; i++) {
         raw_joint_commands_->angles_[i] = spark_joint_signs[i] * processed_joint_commands_->angles_[i]; // apply joint signs to convert to the robot's reference frame
         raw_joint_commands_->stiffness_[i] = processed_joint_commands_->stiffness_[i];
     }
@@ -595,13 +575,14 @@ void NaoBehavior::resetScales() {
 
 
 // Determines whether a collision will occur while moving to a target, adjusting accordingly when necessary
+
 VecPosition NaoBehavior::collisionAvoidance(bool avoidTeammate, bool avoidOpponent, bool avoidBall, double PROXIMITY_THRESH, double COLLISION_THRESH, VecPosition target, bool fKeepDistance) {
     // Obstacle avoidance
     VecPosition closestObjPos = VecPosition(100, 100, 0);
     double closestObjDistance = me.getDistanceTo(closestObjPos);
 
     // Avoid the ball if flag is set
-    if(avoidBall) {
+    if (avoidBall) {
         if (abs(me.getAngleBetweenPoints(target, ball)) < 90.0
                 && (fKeepDistance || me.getDistanceTo(ball) <= me.getDistanceTo(target))) {
             closestObjPos = ball;
@@ -610,13 +591,13 @@ VecPosition NaoBehavior::collisionAvoidance(bool avoidTeammate, bool avoidOppone
     }
 
     // Avoid all of your teamates if flag is set
-    if(avoidTeammate) {
-        for(int i = WO_TEAMMATE1; i <= WO_TEAMMATE11; ++i) {
+    if (avoidTeammate) {
+        for (int i = WO_TEAMMATE1; i <= WO_TEAMMATE11; ++i) {
             // Skip ourself
             if (worldModel->getUNum() == i - WO_TEAMMATE1 + 1) {
                 continue;
             }
-            WorldObject* teammate = worldModel->getWorldObject( i );
+            WorldObject* teammate = worldModel->getWorldObject(i);
             if (teammate->validPosition == true) {
                 VecPosition temp = teammate->pos;
                 temp.setZ(0);
@@ -635,10 +616,10 @@ VecPosition NaoBehavior::collisionAvoidance(bool avoidTeammate, bool avoidOppone
     }
 
     // Avoid opponents if flag is set
-    if(avoidOpponent) {
+    if (avoidOpponent) {
         if (closestObjDistance > PROXIMITY_THRESH) {
-            for(int i = WO_OPPONENT1; i <= WO_OPPONENT11; ++i) {
-                WorldObject* opponent = worldModel->getWorldObject( i );
+            for (int i = WO_OPPONENT1; i <= WO_OPPONENT11; ++i) {
+                WorldObject* opponent = worldModel->getWorldObject(i);
                 if (opponent->validPosition == true) {
                     VecPosition temp = opponent->pos;
                     temp.setZ(0);
@@ -673,7 +654,7 @@ VecPosition NaoBehavior::collisionAvoidanceCorrection(VecPosition start, double 
     }
 
 
-    VecPosition obstacleDir = (obstacle-start).normalize();
+    VecPosition obstacleDir = (obstacle - start).normalize();
 
     VecPosition left90 = start + VecPosition(0, 0, 1).crossProduct(obstacleDir)*1.0;
     VecPosition right90 = start - VecPosition(0, 0, 1).crossProduct(obstacleDir)*1.0;
@@ -685,7 +666,7 @@ VecPosition NaoBehavior::collisionAvoidanceCorrection(VecPosition start, double 
 
     if (obstacleDist <= COLLISION_THRESH) {
         // We're way too close so also back away
-        target += (start-obstacle).normalize()*1.0;
+        target += (start - obstacle).normalize()*1.0;
     }
     return target;
 }
@@ -705,37 +686,32 @@ VecPosition NaoBehavior::collisionAvoidanceApproach(VecPosition start, double PR
         return collisionAvoidanceCorrection(start, PROXIMITY_THRESH, COLLISION_THRESH, target, obstacle);
     }
 
-    VecPosition start2Target = target-start;
+    VecPosition start2Target = target - start;
     VecPosition start2TargetDir = VecPosition(start2Target).normalize();
-    VecPosition start2Obstacle = obstacle-start;
+    VecPosition start2Obstacle = obstacle - start;
     VecPosition start2ObstacleDir = VecPosition(start2Obstacle).normalize();
 
 
-    VecPosition closestPathPoint = start+
-                                   (start2TargetDir*(start2Obstacle.dotProduct(start2TargetDir)));
+    VecPosition closestPathPoint = start +
+            (start2TargetDir * (start2Obstacle.dotProduct(start2TargetDir)));
 
-    double pathDistanceFromObstacle = (obstacle-closestPathPoint).getMagnitude();
+    double pathDistanceFromObstacle = (obstacle - closestPathPoint).getMagnitude();
     VecPosition originalTarget = target;
     if (pathDistanceFromObstacle < PROXIMITY_THRESH) {
-        target = obstacle + (closestPathPoint-obstacle).normalize()*PROXIMITY_THRESH;
+        target = obstacle + (closestPathPoint - obstacle).normalize() * PROXIMITY_THRESH;
     }
     return target;
 
 }
 
-
-
-
-SkillType NaoBehavior::getWalk(const double& direction, const double& rotation, double speed, bool fAllowOver180Turn)
-{
+SkillType NaoBehavior::getWalk(const double& direction, const double& rotation, double speed, bool fAllowOver180Turn) {
     return getWalk(WalkRequestBlock::PARAMS_DEFAULT, direction, rotation, speed, fAllowOver180Turn);
 }
 
-SkillType NaoBehavior::getWalk(WalkRequestBlock::ParamSet paramSet, const double& direction, double rotation, double speed, bool fAllowOver180Turn)
-{
+SkillType NaoBehavior::getWalk(WalkRequestBlock::ParamSet paramSet, const double& direction, double rotation, double speed, bool fAllowOver180Turn) {
     double reqDirection, relSpeed;
 
-    if (worldModel->getTime()-lastGetupRecoveryTime < 1.0 && abs(direction) > 90) {
+    if (worldModel->getTime() - lastGetupRecoveryTime < 1.0 && abs(direction) > 90) {
         // Don't try and walk backwards if we just got up as we are probably unstable
         speed = 0;
     }
@@ -788,13 +764,10 @@ SkillType NaoBehavior::getWalk(WalkRequestBlock::ParamSet paramSet, const double
 
     // Determine the maximum relative speeds that will result in
     // a walk in the appropriate direction.
-    if (tanReqDirection < tanMaxSpeed)
-    {
+    if (tanReqDirection < tanMaxSpeed) {
         relSpeedX = 1;
         relSpeedY = tanReqDirection / tanMaxSpeed;
-    }
-    else
-    {
+    } else {
         relSpeedX = tanMaxSpeed / tanReqDirection;
         relSpeedY = 1;
     }
@@ -819,7 +792,7 @@ SkillType NaoBehavior::getWalk(WalkRequestBlock::ParamSet paramSet, const double
         fLastWalkParamRequestWasApproach = true;
 
         if (lastWalkParamSet != WalkRequestBlock::PARAMS_APPROACH_BALL && (speed < .5 || abs(direction) > 45)) {
-            if (worldModel->getTime()-lastWalkParamRequestApproachTime < .5) {
+            if (worldModel->getTime() - lastWalkParamRequestApproachTime < .5) {
                 paramSet = WalkRequestBlock::PARAMS_DEFAULT;
                 fStabilize = true;
                 relSpeed, relRot = 0;
@@ -857,8 +830,8 @@ SkillType NaoBehavior::getWalk(WalkRequestBlock::ParamSet paramSet, const double
 }
 
 // Currently untuned. For example, there's no slow down...
-SkillType NaoBehavior::goToTargetRelative(const VecPosition& targetLoc, const double& targetRot, const double speed, bool fAllowOver180Turn, WalkRequestBlock::ParamSet paramSet)
-{
+
+SkillType NaoBehavior::goToTargetRelative(const VecPosition& targetLoc, const double& targetRot, const double speed, bool fAllowOver180Turn, WalkRequestBlock::ParamSet paramSet) {
     double walkDirection, walkRotation, walkSpeed;
 
     walkDirection = targetLoc.getTheta();
@@ -875,6 +848,7 @@ SkillType NaoBehavior::goToTargetRelative(const VecPosition& targetLoc, const do
 
 
 //Assumes target = z-0. Maybe needs further tuning
+
 SkillType NaoBehavior::goToTarget(const VecPosition &target) {
     double distance, angle;
     getTargetDistanceAndAngle(target, distance, angle);
@@ -910,7 +884,6 @@ double NaoBehavior::getLimitingAngleForward() {
     return abs(atan2Deg(maxSpeedY, maxSpeedX));
 }
 
-
 void NaoBehavior::refresh() {
     myXDirection = worldModel->l2g(VecPosition(1.0, 0, 0)) - worldModel->l2g(VecPosition(0, 0, 0));
     myXDirection.setZ(0);
@@ -934,6 +907,7 @@ void NaoBehavior::refresh() {
 
 
 //Assumes target it z-0.
+
 void NaoBehavior::getTargetDistanceAndAngle(const VecPosition &target, double &distance, double &angle) {
     VecPosition targetDirection = VecPosition(target) - me;
     targetDirection.setZ(0);
@@ -949,11 +923,10 @@ void NaoBehavior::getTargetDistanceAndAngle(const VecPosition &target, double &d
         //cout << "BAD angle!\n";
         angle = 0;
     }
-    if(myYDirection.dotProduct(targetDirection) < 0) {
+    if (myYDirection.dotProduct(targetDirection) < 0) {
         angle = -angle;
     }
 }
-
 
 bool NaoBehavior::beamablePlayMode() {
     int pm = worldModel->getPlayMode();
@@ -967,64 +940,48 @@ bool NaoBehavior::improperPlayMode() {
 /* Playmodes when we can't touch the ball or game is over (it's not proper to do so) */
 bool NaoBehavior::improperPlayMode(int pm) {
 
-    if(pm == PM_BEFORE_KICK_OFF) {
+    if (pm == PM_BEFORE_KICK_OFF) {
         return true;
-    }
-    else if(pm == PM_GAME_OVER) {
+    } else if (pm == PM_GAME_OVER) {
         return true;
-    }
-    else if(pm == PM_GOAL_LEFT) {
+    } else if (pm == PM_GOAL_LEFT) {
         return true;
-    }
-    else if(pm == PM_GOAL_RIGHT) {
+    } else if (pm == PM_GOAL_RIGHT) {
         return true;
     }
 
-    if(worldModel->getSide() == SIDE_LEFT) {
+    if (worldModel->getSide() == SIDE_LEFT) {
 
-        if(pm == PM_KICK_OFF_RIGHT) {
+        if (pm == PM_KICK_OFF_RIGHT) {
+            return true;
+        } else if (pm == PM_KICK_IN_RIGHT) {
+            return true;
+        } else if (pm == PM_CORNER_KICK_RIGHT) {
+            return true;
+        } else if (pm == PM_GOAL_KICK_RIGHT) {
+            return true;
+        } else if (pm == PM_OFFSIDE_LEFT) {
+            return true;
+        } else if (pm == PM_FREE_KICK_RIGHT) {
+            return true;
+        } else if (pm == PM_DIRECT_FREE_KICK_RIGHT) {
             return true;
         }
-        else if(pm == PM_KICK_IN_RIGHT) {
-            return true;
-        }
-        else if(pm == PM_CORNER_KICK_RIGHT) {
-            return true;
-        }
-        else if(pm == PM_GOAL_KICK_RIGHT) {
-            return true;
-        }
-        else if(pm == PM_OFFSIDE_LEFT) {
-            return true;
-        }
-        else if(pm == PM_FREE_KICK_RIGHT) {
-            return true;
-        }
-        else if(pm == PM_DIRECT_FREE_KICK_RIGHT) {
-            return true;
-        }
-    }
-    else if(worldModel->getSide() == SIDE_RIGHT) {
+    } else if (worldModel->getSide() == SIDE_RIGHT) {
 
-        if(pm == PM_KICK_OFF_LEFT) {
+        if (pm == PM_KICK_OFF_LEFT) {
             return true;
-        }
-        else if(pm == PM_KICK_IN_LEFT) {
+        } else if (pm == PM_KICK_IN_LEFT) {
             return true;
-        }
-        else if(pm == PM_CORNER_KICK_LEFT) {
+        } else if (pm == PM_CORNER_KICK_LEFT) {
             return true;
-        }
-        else if(pm == PM_GOAL_KICK_LEFT) {
+        } else if (pm == PM_GOAL_KICK_LEFT) {
             return true;
-        }
-        else if(pm == PM_OFFSIDE_RIGHT) {
+        } else if (pm == PM_OFFSIDE_RIGHT) {
             return true;
-        }
-        else if(pm == PM_FREE_KICK_LEFT) {
+        } else if (pm == PM_FREE_KICK_LEFT) {
             return true;
-        }
-        else if(pm == PM_DIRECT_FREE_KICK_LEFT) {
+        } else if (pm == PM_DIRECT_FREE_KICK_LEFT) {
             return true;
         }
     }
@@ -1037,7 +994,7 @@ bool NaoBehavior::kickPlayMode() {
 }
 
 bool NaoBehavior::kickPlayMode(int pm, bool eitherTeam) {
-    if(!eitherTeam && improperPlayMode(pm)) {
+    if (!eitherTeam && improperPlayMode(pm)) {
         return false;
     }
 
@@ -1049,13 +1006,12 @@ bool NaoBehavior::isIndirectKick() {
 }
 
 bool NaoBehavior::isIndirectKick(int pm) {
-    if(!kickPlayMode(pm, true)) {
+    if (!kickPlayMode(pm, true)) {
         return false;
     }
 
     return !(pm == PM_DIRECT_FREE_KICK_LEFT || pm == PM_DIRECT_FREE_KICK_RIGHT || pm == PM_CORNER_KICK_LEFT || pm == PM_CORNER_KICK_RIGHT || pm == PM_GOAL_KICK_LEFT || pm == PM_GOAL_KICK_RIGHT);
 }
-
 
 /* Set message to be send to the monitor port */
 void NaoBehavior::setMonMessage(const std::string& msg) {

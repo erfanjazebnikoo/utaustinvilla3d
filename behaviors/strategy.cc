@@ -7,12 +7,11 @@ extern int agentBodyType;
  * Real game beaming.
  * Filling params x y angle
  */
-void NaoBehavior::beam( double& beamX, double& beamY, double& beamAngle ) {
+void NaoBehavior::beam(double& beamX, double& beamY, double& beamAngle) {
     beamX = -HALF_FIELD_X + worldModel->getUNum();
     beamY = 0;
     beamAngle = 0;
 }
-
 
 SkillType NaoBehavior::selectSkill() {
     // My position and angle
@@ -28,7 +27,7 @@ SkillType NaoBehavior::selectSkill() {
     /*
     worldModel->getRVSender()->clear(); // erases drawings from previous cycle
     worldModel->getRVSender()->drawPoint("ball", ball.getX(), ball.getY(), 10.0f, RVSender::MAGENTA);
-    */
+     */
 
     // ### Demo Behaviors ###
 
@@ -43,7 +42,7 @@ SkillType NaoBehavior::selectSkill() {
     //return goToTargetRelative(VecPosition(1,0,0), 15); // Circle
 
     // Walk to the ball
-    //return goToTarget(ball);
+//    return goToTarget(ball);
 
     // Turn in place to face ball
     /*double distance, angle;
@@ -69,9 +68,9 @@ SkillType NaoBehavior::selectSkill() {
 
     // Demo behavior where players form a rotating circle and kick the ball
     // back and forth
+    worldModel->getRVSender()->clear();
     return demoKickingCircle();
 }
-
 
 /*
  * Demo behavior where players form a rotating circle and kick the ball
@@ -79,21 +78,21 @@ SkillType NaoBehavior::selectSkill() {
  */
 SkillType NaoBehavior::demoKickingCircle() {
     // Parameters for circle
-    VecPosition center = VecPosition(-HALF_FIELD_X/2.0, 0, 0);
+    VecPosition center = VecPosition(-HALF_FIELD_X / 2.0, 0, 0);
     double circleRadius = 5.0;
     double rotateRate = 2.5;
 
     // Find closest player to ball
     int playerClosestToBall = -1;
     double closestDistanceToBall = 10000;
-    for(int i = WO_TEAMMATE1; i < WO_TEAMMATE1+NUM_AGENTS; ++i) {
+    for (int i = WO_TEAMMATE1; i < WO_TEAMMATE1 + NUM_AGENTS; ++i) {
         VecPosition temp;
         int playerNum = i - WO_TEAMMATE1 + 1;
         if (worldModel->getUNum() == playerNum) {
             // This is us
             temp = worldModel->getMyPosition();
         } else {
-            WorldObject* teammate = worldModel->getWorldObject( i );
+            WorldObject* teammate = worldModel->getWorldObject(i);
             if (teammate->validPosition) {
                 temp = teammate->pos;
             } else {
@@ -109,9 +108,13 @@ SkillType NaoBehavior::demoKickingCircle() {
         }
     }
 
+    worldModel->getRVSender()->clear();
+
     if (playerClosestToBall == worldModel->getUNum()) {
         // Have closest player kick the ball toward the center
-        return kickBall(KICK_FORWARD, center);
+        worldModel->getRVSender()->drawCircle(center.getX(), center.getY(), 0.5, worldModel->getRVSender()->YELLOW);
+        worldModel->getRVSender()->drawLine(me.getX(), me.getY(), center.getX(), center.getY(), worldModel->getRVSender()->PINK);
+        return kickBall(KICK_IK, center);
     } else {
         // Move to circle position around center and face the center
         VecPosition localCenter = worldModel->g2l(center);
@@ -119,10 +122,13 @@ SkillType NaoBehavior::demoKickingCircle() {
 
         // Our desired target position on the circle
         // Compute target based on uniform number, rotate rate, and time
-        VecPosition target = center + VecPosition(circleRadius,0,0).rotateAboutZ(360.0/(NUM_AGENTS-1)*(worldModel->getUNum()-(worldModel->getUNum() > playerClosestToBall ? 1 : 0)) + worldModel->getTime()*rotateRate);
+        VecPosition target = center + VecPosition(circleRadius, 0, 0).rotateAboutZ(360.0 / (NUM_AGENTS - 1)*(worldModel->getUNum()-(worldModel->getUNum() > playerClosestToBall ? 1 : 0)) + worldModel->getTime() * rotateRate);
 
         // Adjust target to not be too close to teammates or the ball
         target = collisionAvoidance(true /*teammate*/, false/*opponent*/, true/*ball*/, 1/*proximity thresh*/, .5/*collision thresh*/, target, true/*keepDistance*/);
+
+        worldModel->getRVSender()->drawCircle(target.getX(), target.getY(), 0.5, worldModel->getRVSender()->RED);
+        worldModel->getRVSender()->drawLine(me.getX(), me.getY(), target.getX(), target.getY(), worldModel->getRVSender()->BLUE);
 
         if (me.getDistanceTo(target) < .25 && abs(localCenterAngle) <= 10) {
             // Close enough to desired position and orientation so just stand
